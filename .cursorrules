@@ -1,0 +1,6 @@
+# UniVoice agent context
+
+Before generating or modifying code, agents must consult both canonical project documents:
+
+1. `frontend/docs/PROJECT_STATE.md`
+2. `frontend/docs/CODE_INDEX.md`
