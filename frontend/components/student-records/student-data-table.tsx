@@ -25,8 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { STUDENT_RECORDS_PAGE_SIZE } from "@/lib/student-records/configurations";
 import { cn } from "@/lib/utils";
+import { STUDENT_RECORDS_PAGE_SIZE } from "@/modules/students/configurations";
 
 // Provide useReactTable alias for TanStack Table v8/v9 interoperability
 export const useReactTable = useTable;

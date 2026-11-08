@@ -5,7 +5,7 @@ import type {
   FinanceFeeStatus,
   LibraryTransactionStatus,
   ScholarshipStatus,
-} from "./types";
+} from "@/modules/students/domain/types";
 
 export interface StudentRecordsFilterState {
   academicYear?: string;

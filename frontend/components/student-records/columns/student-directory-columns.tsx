@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Phone } from "lucide-react";
 import type { StudentTableFeatures } from "@/components/student-records/student-data-table";
-import type { StudentDirectoryRecord } from "@/lib/student-records/types";
+import type { StudentDirectoryRecord } from "@/modules/students/domain/types";
 
 /**
  * Student Directory column definitions.

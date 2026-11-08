@@ -1,178 +1,68 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Database,
-  Plug,
-  RefreshCw,
-  RotateCw,
-  Settings,
-  Unplug,
-} from "lucide-react";
-import { memo, useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { Database, Eye, EyeOff, LoaderCircle, Plug, Save } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PluginsHeader } from "@/components/plugins/plugins-header";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
-type PluginStatus = "connected" | "disconnected" | "connecting";
+type ConnectionStatus = "connected" | "not-connected" | "testing" | "error";
 
-type DatabasePlugin = {
-  id: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  category: string;
-  access: string;
-  status: PluginStatus;
-  uri: string;
-  tables: string[];
-  records: string;
+type ConnectionResponse = {
+  connected?: boolean;
+  message?: string;
+  success?: boolean;
+  status?: ConnectionStatus;
 };
 
-const INITIAL_PLUGINS: DatabasePlugin[] = [
-  {
-    access: "View records",
-    category: "Student Records",
-    description: "Student information, enrollment status, and program details.",
-    id: "student_master_db",
-    name: "Student Records",
-    records: "14,820 student records indexed",
-    status: "connected",
-    subtitle: "Student information",
-    tables: ["students", "departments", "programs", "academic_records"],
-    uri: "postgresql://app_read:••••••••@cluster-01.univoice.internal:5432/student_master_db",
-  },
-  {
-    access: "View records",
-    category: "Fee Records",
-    description: "Fees and payments, tuition balances, and billing schedules.",
-    id: "fees_ledger_prod",
-    name: "Fee Records",
-    records: "8,410 ledger accounts indexed",
-    status: "disconnected",
-    subtitle: "Fees and payments",
-    tables: ["tuition_accounts", "payments", "invoices", "installments"],
-    uri: "postgresql://app_read:••••••••@ledger-prod.univoice.internal:5432/fees_ledger_prod",
-  },
-];
+const statusLabels: Record<ConnectionStatus, string> = {
+  connected: "Connected",
+  error: "Error",
+  "not-connected": "Not Connected",
+  testing: "Testing",
+};
 
-interface PluginCardProps {
-  onConnect: (id: string) => void;
-  onManage: (plugin: DatabasePlugin) => void;
-  plugin: DatabasePlugin;
+const statusStyles: Record<ConnectionStatus, string> = {
+  connected:
+    "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  error: "border-destructive/25 bg-destructive/10 text-destructive",
+  "not-connected": "border-border/60 bg-muted/50 text-muted-foreground",
+  testing: "border-sky-500/25 bg-sky-500/10 text-sky-600 dark:text-sky-400",
+};
+
+async function readSavedConnectionStatus(): Promise<ConnectionResponse> {
+  const response = await fetch("/api/supabase-connection", {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+
+  let result: ConnectionResponse | null = null;
+  try {
+    result = (await response.json()) as ConnectionResponse;
+  } catch {
+    result = null;
+  }
+
+  if (!response.ok) {
+    return {
+      message: result?.message ?? "Saved connection status is unavailable.",
+      status: "error",
+    };
+  }
+
+  return result ?? {};
 }
 
-const PluginCard = memo(function PurePluginCard({
-  plugin,
-  onConnect,
-  onManage,
-}: PluginCardProps) {
-  const isConnected = plugin.status === "connected";
-  const isConnecting = plugin.status === "connecting";
-
-  const handleConnectClick = useCallback(() => {
-    onConnect(plugin.id);
-  }, [onConnect, plugin.id]);
-
-  const handleManageClick = useCallback(() => {
-    onManage(plugin);
-  }, [onManage, plugin]);
-
-  return (
-    <div
-      className="flex flex-col justify-between rounded-2xl border border-border/50 bg-card/60 p-6 shadow-xs backdrop-blur-md transition-all duration-200 hover:border-border/80"
-      data-testid={`plugin-card-${plugin.id}`}
-    >
-      <div>
-        {/* Header: Icon, Friendly Name & Status Indicator */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-muted-foreground">
-              <Database className="size-5" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-base text-foreground tracking-tight">
-                {plugin.name}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {plugin.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Status Badge */}
-          {isConnected ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              <span>Connected</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              <span className="size-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500" />
-              <span>Not connected</span>
-            </span>
-          )}
-        </div>
-
-        {/* Short Description */}
-        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          {plugin.description}
-        </p>
-      </div>
-
-      {/* Action Footer: Single Action Button */}
-      <div className="mt-6 flex items-center justify-end border-t border-border/30 pt-4">
-        {isConnected ? (
-          <Button
-            className="h-8.5 gap-1.5 rounded-xl border-border/60 px-4 text-xs font-medium hover:bg-muted/60 cursor-pointer text-foreground"
-            data-testid={`manage-button-${plugin.id}`}
-            onClick={handleManageClick}
-            size="sm"
-            variant="outline"
-          >
-            <Settings className="size-3.5 text-muted-foreground" />
-            <span>Settings</span>
-          </Button>
-        ) : (
-          <Button
-            className="h-8.5 gap-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white px-4 text-xs font-medium shadow-xs cursor-pointer"
-            data-testid={`connect-button-${plugin.id}`}
-            disabled={isConnecting}
-            onClick={handleConnectClick}
-            size="sm"
-          >
-            {isConnecting ? (
-              <>
-                <RotateCw className="size-3.5 animate-spin" />
-                <span>Connecting...</span>
-              </>
-            ) : (
-              <>
-                <Plug className="size-3.5" />
-                <span>Connect</span>
-              </>
-            )}
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-});
-
 export default function PluginsPage() {
-  const [plugins, setPlugins] = useState<DatabasePlugin[]>(INITIAL_PLUGINS);
-  const [activePlugin, setActivePlugin] = useState<DatabasePlugin | null>(null);
-  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
+  const [projectUrl, setProjectUrl] = useState("");
+  const anonKeyInputRef = useRef<HTMLInputElement>(null);
+  const [hasAnonKey, setHasAnonKey] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [status, setStatus] = useState<ConnectionStatus>("not-connected");
+  const [message, setMessage] = useState(
+    "Add your Supabase project URL and public anon or publishable key."
+  );
+  const [busyAction, setBusyAction] = useState<"test" | "save" | null>(null);
 
   useEffect(() => {
     document.title = "UniVoice — Plugins";
@@ -181,93 +71,151 @@ export default function PluginsPage() {
     };
   }, []);
 
-  const handleConnect = useCallback((id: string) => {
-    setPlugins((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "connecting" } : p))
-    );
+  useEffect(() => {
+    let isCurrent = true;
 
-    setTimeout(() => {
-      setPlugins((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, status: "connected" } : p))
+    readSavedConnectionStatus()
+      .then((result) => {
+        if (!isCurrent || !result) {
+          return;
+        }
+        if (result.status) {
+          setStatus(result.status);
+          if (result.message) {
+            setMessage(result.message);
+          }
+        }
+      })
+      .catch(() => {
+        // The form remains available if saved connection status cannot be loaded.
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  const updateCredentials = useCallback(() => {
+    setStatus("not-connected");
+    setMessage("Test the current credentials before saving the connection.");
+  }, []);
+
+  const handleProjectUrlChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setProjectUrl(event.currentTarget.value);
+      updateCredentials();
+    },
+    [updateCredentials]
+  );
+
+  const handleAnonKeyChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setHasAnonKey(event.currentTarget.value.trim().length > 0);
+      updateCredentials();
+    },
+    [updateCredentials]
+  );
+
+  const handleToggleKeyVisibility = useCallback(() => {
+    setShowKey((current) => !current);
+  }, []);
+
+  const submitCredentials = useCallback(
+    async (action: "test" | "save") => {
+      if (busyAction) {
+        return;
+      }
+
+      const anonKey = anonKeyInputRef.current?.value.trim() ?? "";
+      if (!anonKey || !projectUrl.trim()) {
+        return;
+      }
+
+      setBusyAction(action);
+      setStatus("testing");
+      setMessage(
+        action === "test"
+          ? "Checking the connection securely on the server…"
+          : "Verifying and saving the connection securely…"
       );
-      toast.success(`${id} connected successfully (Simulated)`, {
-        description: "Schema verified and read access permissions granted.",
-      });
-    }, 700);
-  }, []);
 
-  const handleOpenManage = useCallback((plugin: DatabasePlugin) => {
-    setActivePlugin(plugin);
-    setIsManageDialogOpen(true);
-  }, []);
+      try {
+        const response = await fetch("/api/supabase-connection", {
+          body: JSON.stringify({ action, anonKey, projectUrl }),
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const result = (await response.json()) as ConnectionResponse;
 
-  const handleCloseManage = useCallback(() => {
-    setIsManageDialogOpen(false);
-    setActivePlugin(null);
-  }, []);
+        if (!response.ok || !result.success) {
+          setStatus("error");
+          setMessage(
+            result.message ?? "The Supabase connection could not be verified."
+          );
+          return;
+        }
 
-  const handleDisconnect = useCallback(() => {
-    if (!activePlugin) {
-      return;
-    }
-    const pluginId = activePlugin.id;
+        setStatus("connected");
+        setMessage(
+          action === "save"
+            ? "Connection verified and securely saved."
+            : "Connection verified. Save it to keep it for your account."
+        );
 
-    setPlugins((prev) =>
-      prev.map((p) =>
-        p.id === pluginId ? { ...p, status: "disconnected" } : p
-      )
-    );
+        if (action === "save") {
+          if (anonKeyInputRef.current) {
+            anonKeyInputRef.current.value = "";
+          }
+          setHasAnonKey(false);
+          setShowKey(false);
+        }
+      } catch {
+        setStatus("error");
+        setMessage("Unable to reach the connection service. Please try again.");
+      } finally {
+        setBusyAction(null);
+      }
+    },
+    [busyAction, projectUrl]
+  );
 
-    setIsManageDialogOpen(false);
-    setActivePlugin(null);
+  const handleTestConnection = useCallback(async () => {
+    await submitCredentials("test");
+  }, [submitCredentials]);
 
-    toast.info(`${pluginId} disconnected (Simulated)`, {
-      description: "Database connection closed. Data query cache cleared.",
-    });
-  }, [activePlugin]);
-
-  const handleTestConnection = useCallback(() => {
-    setIsTesting(true);
-    setTimeout(() => {
-      setIsTesting(false);
-      toast.success("Connection test passed (12ms latency)", {
-        description: "Active read replica healthy and reachable.",
-      });
-    }, 600);
-  }, []);
+  const handleSaveConnection = useCallback(async () => {
+    await submitCredentials("save");
+  }, [submitCredentials]);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-sidebar">
       <PluginsHeader />
 
-      <section className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40 bg-background">
-        <div className="mx-auto max-w-5xl space-y-8">
-          {/* Top Title Banner */}
+      <section className="flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8 sm:py-8 md:rounded-tl-[12px] md:border-l md:border-t md:border-border/40">
+        <div className="mx-auto flex min-h-full max-w-4xl flex-col">
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            className="flex items-center gap-4"
             initial={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex items-center gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-muted/40 text-muted-foreground shadow-xs">
-                <Plug className="size-6" />
-              </div>
-              <div>
-                <h1 className="font-bold text-2xl tracking-tight text-foreground sm:text-3xl">
-                  Plugins
-                </h1>
-                <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
-                  Manage your connected data sources
-                </p>
-              </div>
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-muted/40 text-muted-foreground shadow-xs">
+              <Plug className="size-6" />
+            </div>
+            <div>
+              <h1 className="font-bold text-2xl tracking-tight text-foreground sm:text-3xl">
+                Plugins
+              </h1>
+              <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                Manage your connected data sources
+              </p>
             </div>
           </motion.div>
 
-          {/* Database Plugin Cards Grid */}
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 gap-6 md:grid-cols-2"
+            className="flex flex-1 items-center justify-center py-8"
             initial={{ opacity: 0, y: 12 }}
             transition={{
               delay: 0.1,
@@ -275,115 +223,136 @@ export default function PluginsPage() {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            {plugins.map((plugin) => (
-              <PluginCard
-                key={plugin.id}
-                onConnect={handleConnect}
-                onManage={handleOpenManage}
-                plugin={plugin}
-              />
-            ))}
+            <section className="w-full max-w-xl rounded-2xl border border-border/50 bg-card/70 p-5 shadow-xs backdrop-blur-md sm:p-7">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-muted-foreground">
+                  <Database className="size-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-base tracking-tight text-foreground">
+                    Supabase Connection
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Connect with your project URL and public anon or publishable
+                    key.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="space-y-1.5">
+                  <label
+                    className="text-xs font-medium text-foreground"
+                    htmlFor="supabase-project-url"
+                  >
+                    Supabase Project URL
+                  </label>
+                  <input
+                    autoComplete="url"
+                    className="h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                    id="supabase-project-url"
+                    onChange={handleProjectUrlChange}
+                    placeholder="https://your-project.supabase.co"
+                    spellCheck={false}
+                    type="url"
+                    value={projectUrl}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label
+                    className="text-xs font-medium text-foreground"
+                    htmlFor="supabase-anon-key"
+                  >
+                    Supabase Anon / Publishable Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      autoComplete="off"
+                      className="h-10 w-full rounded-lg border border-border/60 bg-background py-2 pl-3 pr-11 font-mono text-xs text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                      id="supabase-anon-key"
+                      onChange={handleAnonKeyChange}
+                      placeholder="Public anon or sb_publishable_… key"
+                      ref={anonKeyInputRef}
+                      spellCheck={false}
+                      type={showKey ? "text" : "password"}
+                    />
+                    <button
+                      aria-label={showKey ? "Hide key" : "Show key"}
+                      className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                      onClick={handleToggleKeyVisibility}
+                      type="button"
+                    >
+                      {showKey ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border/50 bg-background/60 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                  aria-live="polite"
+                  className="flex min-w-0 items-start gap-2.5"
+                >
+                  <span
+                    className={`mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusStyles[status]}`}
+                  >
+                    {status === "testing" ? (
+                      <LoaderCircle className="size-3 animate-spin" />
+                    ) : (
+                      <span className="size-1.5 rounded-full bg-current" />
+                    )}
+                    {statusLabels[status]}
+                  </span>
+                  <p className="pt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {message}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2 sm:justify-end">
+                  <Button
+                    className="h-9 gap-1.5 rounded-lg px-3 text-xs"
+                    disabled={
+                      busyAction !== null || !projectUrl.trim() || !hasAnonKey
+                    }
+                    onClick={handleTestConnection}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {busyAction === "test" ? (
+                      <LoaderCircle className="size-3.5 animate-spin" />
+                    ) : null}
+                    Test Connection
+                  </Button>
+                  <Button
+                    className="h-9 gap-1.5 rounded-lg px-3 text-xs"
+                    disabled={
+                      busyAction !== null || !projectUrl.trim() || !hasAnonKey
+                    }
+                    onClick={handleSaveConnection}
+                    size="sm"
+                  >
+                    {busyAction === "save" ? (
+                      <LoaderCircle className="size-3.5 animate-spin" />
+                    ) : (
+                      <Save className="size-3.5" />
+                    )}
+                    Save Connection
+                  </Button>
+                </div>
+              </div>
+
+              <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground/80">
+                Use only a public anon or publishable key. Connection checks and
+                encrypted storage run on the server.
+              </p>
+            </section>
           </motion.div>
         </div>
       </section>
-
-      {/* Settings Dialog */}
-      <Dialog onOpenChange={setIsManageDialogOpen} open={isManageDialogOpen}>
-        <DialogContent className="max-w-md border-border/60 bg-card p-6 shadow-xl">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-muted/40 text-muted-foreground">
-                <Database className="size-5" />
-              </div>
-              <div>
-                <DialogTitle className="font-bold text-base text-foreground">
-                  {activePlugin?.name}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  {activePlugin?.subtitle}
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {activePlugin ? (
-            <div className="space-y-3.5 py-2 text-xs">
-              <div className="rounded-xl border border-border/50 bg-background/50 p-3 space-y-2 text-xs">
-                <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Connection:</span>
-                  <span className="text-foreground font-mono text-[11px] truncate max-w-[220px]">
-                    {activePlugin.uri}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Access:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                    View records
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Status:</span>
-                  <span className="text-foreground">
-                    {activePlugin.records}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  Indexed Tables
-                </span>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {activePlugin.tables.map((table) => (
-                    <span
-                      className="rounded-md border border-border/50 bg-muted/40 px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
-                      key={table}
-                    >
-                      {table}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <DialogFooter className="mt-4 flex flex-row items-center justify-between gap-2 border-t border-border/40 pt-4">
-            <Button
-              className="h-8 gap-1 rounded-lg text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
-              onClick={handleDisconnect}
-              size="sm"
-              variant="ghost"
-            >
-              <Unplug className="size-3.5" />
-              <span>Disconnect</span>
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Button
-                className="h-8 gap-1.5 rounded-lg text-xs cursor-pointer"
-                disabled={isTesting}
-                onClick={handleTestConnection}
-                size="sm"
-                variant="outline"
-              >
-                <RefreshCw
-                  className={cn("size-3 text-muted-foreground", {
-                    "animate-spin": isTesting,
-                  })}
-                />
-                <span>Test Connection</span>
-              </Button>
-              <Button
-                className="h-8 rounded-lg text-xs cursor-pointer"
-                onClick={handleCloseManage}
-                size="sm"
-              >
-                Done
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

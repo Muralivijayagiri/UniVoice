@@ -18,22 +18,20 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useActiveChat } from "@/hooks/use-active-chat";
 import { useRole } from "@/hooks/use-role";
 import { generateCampaignDraft } from "@/lib/student-records/campaign-handoff";
-import {
-  getDemoRecordsByRole,
-  STUDENT_RECORDS_PAGE_SIZE,
-} from "@/lib/student-records/configurations";
+import { fetchStudentRecordsByRole } from "@/lib/student-records/supabase-queries";
+import { isSupabaseConfigured, isSupabaseRlsResolved } from "@/lib/supabase";
+import { STUDENT_RECORDS_PAGE_SIZE } from "@/modules/students/configurations";
+import { getDemoRecordsByRole } from "@/modules/students/data/demo-records";
 import {
   DEFAULT_FILTER_STATE,
   filterStudentRecords,
   type StudentRecordsFilterState,
-} from "@/lib/student-records/filters";
-import { fetchStudentRecordsByRole } from "@/lib/student-records/supabase-queries";
+} from "@/modules/students/domain/filters";
 import type {
   AdmissionsRecord,
   LibraryStudentRecord,
   StudentRecord,
-} from "@/lib/student-records/types";
-import { isSupabaseConfigured, isSupabaseRlsResolved } from "@/lib/supabase";
+} from "@/modules/students/domain/types";
 import { admissionsColumns } from "./columns/admissions-columns";
 import { classTeacherColumns } from "./columns/class-teacher-columns";
 import { financeColumns } from "./columns/finance-columns";

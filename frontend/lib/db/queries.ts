@@ -27,6 +27,7 @@ import {
   type Suggestion,
   stream,
   suggestion,
+  supabaseConnection,
   type User,
   user,
   vote,
@@ -42,6 +43,37 @@ export async function getUser(email: string): Promise<User[]> {
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
+}
+
+export async function getSupabaseConnectionByUserId(userId: string) {
+  const [connection] = await db
+    .select({
+      encryptedCredentials: supabaseConnection.encryptedCredentials,
+      updatedAt: supabaseConnection.updatedAt,
+    })
+    .from(supabaseConnection)
+    .where(eq(supabaseConnection.userId, userId))
+    .limit(1);
+
+  return connection ?? null;
+}
+
+export async function saveSupabaseConnectionForUser({
+  encryptedCredentials,
+  userId,
+}: {
+  encryptedCredentials: string;
+  userId: string;
+}) {
+  const now = new Date();
+
+  await db
+    .insert(supabaseConnection)
+    .values({ encryptedCredentials, updatedAt: now, userId })
+    .onConflictDoUpdate({
+      set: { encryptedCredentials, updatedAt: now },
+      target: supabaseConnection.userId,
+    });
 }
 
 export async function createUser(email: string, password: string) {

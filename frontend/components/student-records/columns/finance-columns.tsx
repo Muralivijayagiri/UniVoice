@@ -6,7 +6,7 @@ import type { StudentTableFeatures } from "@/components/student-records/student-
 import type {
   FinanceFeeStatus,
   FinanceStudentRecord,
-} from "@/lib/student-records/types";
+} from "@/modules/students/domain/types";
 
 /**
  * Currency formatter for fee amounts in INR

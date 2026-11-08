@@ -6,7 +6,7 @@ import type { StudentTableFeatures } from "@/components/student-records/student-
 import type {
   AdmissionStatus,
   AdmissionsRecord,
-} from "@/lib/student-records/types";
+} from "@/modules/students/domain/types";
 
 /**
  * Visual badge for original documents submission state (Yes / No)

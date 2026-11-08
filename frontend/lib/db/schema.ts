@@ -25,6 +25,18 @@ export const user = pgTable("User", {
 
 export type User = InferSelectModel<typeof user>;
 
+export const supabaseConnection = pgTable("SupabaseConnection", {
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  encryptedCredentials: text("encryptedCredentials").notNull(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  userId: uuid("userId")
+    .primaryKey()
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export type SupabaseConnection = InferSelectModel<typeof supabaseConnection>;
+
 export const chat = pgTable("Chat", {
   createdAt: timestamp("createdAt").notNull(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),

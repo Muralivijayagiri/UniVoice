@@ -9,7 +9,7 @@ UniVoice is a multi-agent outbound voice campaign platform tailored for universi
 - Application Boundary: All code lives inside `frontend/`. Never touch or run commands from root `package.json`. Always run scripts using `pnpm` inside `frontend/`.
 - Path Aliasing: Use `@/*` pointing directly to `frontend/*`.
 - Ghost Backend Ban: Telephony, Python, FastAPI, and LangGraph do NOT exist in this repo. Mock backend interactions on the frontend until formal backend integration.
-- Pagination Constraint: Student Records page size is strictly centralized. Always import `STUDENT_RECORDS_PAGE_SIZE` from `@/lib/student-records/configurations` (= 25). Never hardcode numbers.
+- Pagination Constraint: Student Records page size is strictly centralized. Always import `STUDENT_RECORDS_PAGE_SIZE` from `@/modules/students/configurations` (= 25). Never hardcode numbers.
 - Five Core Roles: System operations are restricted to `finance`, `admissions`, `scholarship`, `library`, and `class_teacher` (defined in `lib/roles.ts`).
 
 ## 3. Library & Framework Contracts

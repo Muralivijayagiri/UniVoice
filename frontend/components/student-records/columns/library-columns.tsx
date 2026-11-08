@@ -6,7 +6,7 @@ import type { StudentTableFeatures } from "@/components/student-records/student-
 import type {
   LibraryStudentRecord,
   LibraryTransactionStatus,
-} from "@/lib/student-records/types";
+} from "@/modules/students/domain/types";
 
 /**
  * Formats date string to readable format (e.g. "Oct 15, 2024").
