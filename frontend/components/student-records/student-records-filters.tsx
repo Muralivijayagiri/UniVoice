@@ -26,22 +26,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { RoleId } from "@/lib/roles";
+import { cn } from "@/lib/utils";
 import {
   ACADEMIC_BRANCHES,
   ACADEMIC_DEPARTMENTS,
+} from "@/modules/departments/domain/academic-structure";
+import {
   ADMISSION_STATUSES,
   FINANCE_STATUSES,
   LIBRARY_STATUSES,
   SCHOLARSHIP_STATUSES,
-} from "@/lib/student-records/configurations";
+} from "@/modules/students/configurations";
 import {
   extractDistinctSemesters,
   extractDistinctValues,
   hasActiveFilters,
   type StudentRecordsFilterState,
-} from "@/lib/student-records/filters";
-import type { StudentRecord } from "@/lib/student-records/types";
-import { cn } from "@/lib/utils";
+} from "@/modules/students/domain/filters";
+import type { StudentRecord } from "@/modules/students/domain/types";
 
 interface FilterOption {
   label: string;

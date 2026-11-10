@@ -13,7 +13,7 @@ import type {
   ScholarshipStudentRecord,
   StudentDirectoryRecord,
   StudentRecord,
-} from "./types";
+} from "@/modules/students/domain/types";
 
 /**
  * Standard query result container returned by all read-only queries

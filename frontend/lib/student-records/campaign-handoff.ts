@@ -2,8 +2,11 @@ import { formatCurrency } from "@/components/student-records/columns/finance-col
 import { formatDate } from "@/components/student-records/columns/library-columns";
 import type { CampaignPreviewData, CampaignStudent } from "@/lib/campaign";
 import type { RoleId, UniversityRole } from "@/lib/roles";
-import { ACADEMIC_BRANCHES, ACADEMIC_DEPARTMENTS } from "./configurations";
-import type { StudentRecordsFilterState } from "./filters";
+import {
+  ACADEMIC_BRANCHES,
+  ACADEMIC_DEPARTMENTS,
+} from "@/modules/departments/domain/academic-structure";
+import type { StudentRecordsFilterState } from "@/modules/students/domain/filters";
 import type {
   AdmissionsRecord,
   ClassTeacherStudentRecord,
@@ -11,7 +14,7 @@ import type {
   LibraryStudentRecord,
   ScholarshipStudentRecord,
   StudentRecord,
-} from "./types";
+} from "@/modules/students/domain/types";
 
 /**
  * Builds a natural description of the active selection filters
