@@ -3,7 +3,7 @@
 import { Phone } from "lucide-react";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { STUDENT_RECORDS_PAGE_SIZE } from "@/lib/student-records/configurations";
+import { STUDENT_RECORDS_PAGE_SIZE } from "@/modules/students/configurations";
 
 export interface StudentTablePaginationProps {
   canNextPage?: boolean;

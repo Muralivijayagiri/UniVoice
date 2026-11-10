@@ -19,7 +19,9 @@
 - `frontend/app/(chat)/student-records/page.tsx`: Main registry view hosting tables and handoff action buttons.
 - `frontend/components/student-records/student-records-table.tsx`: TanStack Table v9 core rendering pagination and filters.
 - `frontend/components/student-records/columns/`: Role-specific table column definitions (`finance.tsx`, `admissions.tsx`, etc.).
-- `frontend/lib/student-records/configurations.ts`: Table constants (`STUDENT_RECORDS_PAGE_SIZE = 25`) and fallback mock data generators.
+- `frontend/modules/students/configurations.ts`: Student Records filter options and page-size constant (`STUDENT_RECORDS_PAGE_SIZE = 25`).
+- `frontend/modules/students/data/demo-records.ts`: Role-specific fallback demo datasets and generators.
+- `frontend/modules/departments/domain/academic-structure.ts`: Academic department and branch reference data.
 - `frontend/lib/student-records/supabase-queries.ts`: Live query helpers for Supabase database tables.
 - `frontend/lib/student-records/campaign-handoff.ts`: Converts filtered student rows into natural-language campaign drafts.
 
