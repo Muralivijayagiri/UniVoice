@@ -73,7 +73,9 @@ export function validateSupabaseCredentials(
   }
 
   const isSupabaseProjectHost =
-    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.supabase\.co$/.test(parsedUrl.hostname);
+    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.supabase\.co$/.test(
+      parsedUrl.hostname
+    );
 
   if (
     parsedUrl.protocol !== "https:" ||

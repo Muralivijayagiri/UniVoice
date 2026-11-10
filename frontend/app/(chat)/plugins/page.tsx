@@ -1,192 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Database, Eye, EyeOff, LoaderCircle, Plug, Save } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Database, Plug, Save } from "lucide-react";
+import { useEffect } from "react";
 import { PluginsHeader } from "@/components/plugins/plugins-header";
 import { Button } from "@/components/ui/button";
 
-type ConnectionStatus = "connected" | "not-connected" | "testing" | "error";
-
-type ConnectionResponse = {
-  connected?: boolean;
-  message?: string;
-  success?: boolean;
-  status?: ConnectionStatus;
-};
-
-const statusLabels: Record<ConnectionStatus, string> = {
-  connected: "Connected",
-  error: "Error",
-  "not-connected": "Not Connected",
-  testing: "Testing",
-};
-
-const statusStyles: Record<ConnectionStatus, string> = {
-  connected:
-    "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  error: "border-destructive/25 bg-destructive/10 text-destructive",
-  "not-connected": "border-border/60 bg-muted/50 text-muted-foreground",
-  testing: "border-sky-500/25 bg-sky-500/10 text-sky-600 dark:text-sky-400",
-};
-
-async function readSavedConnectionStatus(): Promise<ConnectionResponse> {
-  const response = await fetch("/api/supabase-connection", {
-    cache: "no-store",
-    headers: { Accept: "application/json" },
-  });
-
-  let result: ConnectionResponse | null = null;
-  try {
-    result = (await response.json()) as ConnectionResponse;
-  } catch {
-    result = null;
-  }
-
-  if (!response.ok) {
-    return {
-      message: result?.message ?? "Saved connection status is unavailable.",
-      status: "error",
-    };
-  }
-
-  return result ?? {};
-}
-
 export default function PluginsPage() {
-  const [projectUrl, setProjectUrl] = useState("");
-  const anonKeyInputRef = useRef<HTMLInputElement>(null);
-  const [hasAnonKey, setHasAnonKey] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-  const [status, setStatus] = useState<ConnectionStatus>("not-connected");
-  const [message, setMessage] = useState(
-    "Add your Supabase project URL and public anon or publishable key."
-  );
-  const [busyAction, setBusyAction] = useState<"test" | "save" | null>(null);
-
   useEffect(() => {
     document.title = "UniVoice — Plugins";
     return () => {
       document.title = "UniVoice — AI Outbound Campaign & Voice Orchestration";
     };
   }, []);
-
-  useEffect(() => {
-    let isCurrent = true;
-
-    readSavedConnectionStatus()
-      .then((result) => {
-        if (!isCurrent || !result) {
-          return;
-        }
-        if (result.status) {
-          setStatus(result.status);
-          if (result.message) {
-            setMessage(result.message);
-          }
-        }
-      })
-      .catch(() => {
-        // The form remains available if saved connection status cannot be loaded.
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
-
-  const updateCredentials = useCallback(() => {
-    setStatus("not-connected");
-    setMessage("Test the current credentials before saving the connection.");
-  }, []);
-
-  const handleProjectUrlChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setProjectUrl(event.currentTarget.value);
-      updateCredentials();
-    },
-    [updateCredentials]
-  );
-
-  const handleAnonKeyChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setHasAnonKey(event.currentTarget.value.trim().length > 0);
-      updateCredentials();
-    },
-    [updateCredentials]
-  );
-
-  const handleToggleKeyVisibility = useCallback(() => {
-    setShowKey((current) => !current);
-  }, []);
-
-  const submitCredentials = useCallback(
-    async (action: "test" | "save") => {
-      if (busyAction) {
-        return;
-      }
-
-      const anonKey = anonKeyInputRef.current?.value.trim() ?? "";
-      if (!anonKey || !projectUrl.trim()) {
-        return;
-      }
-
-      setBusyAction(action);
-      setStatus("testing");
-      setMessage(
-        action === "test"
-          ? "Checking the connection securely on the server…"
-          : "Verifying and saving the connection securely…"
-      );
-
-      try {
-        const response = await fetch("/api/supabase-connection", {
-          body: JSON.stringify({ action, anonKey, projectUrl }),
-          cache: "no-store",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        });
-        const result = (await response.json()) as ConnectionResponse;
-
-        if (!response.ok || !result.success) {
-          setStatus("error");
-          setMessage(
-            result.message ?? "The Supabase connection could not be verified."
-          );
-          return;
-        }
-
-        setStatus("connected");
-        setMessage(
-          action === "save"
-            ? "Connection verified and securely saved."
-            : "Connection verified. Save it to keep it for your account."
-        );
-
-        if (action === "save") {
-          if (anonKeyInputRef.current) {
-            anonKeyInputRef.current.value = "";
-          }
-          setHasAnonKey(false);
-          setShowKey(false);
-        }
-      } catch {
-        setStatus("error");
-        setMessage("Unable to reach the connection service. Please try again.");
-      } finally {
-        setBusyAction(null);
-      }
-    },
-    [busyAction, projectUrl]
-  );
-
-  const handleTestConnection = useCallback(async () => {
-    await submitCredentials("test");
-  }, [submitCredentials]);
-
-  const handleSaveConnection = useCallback(async () => {
-    await submitCredentials("save");
-  }, [submitCredentials]);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-sidebar">
@@ -250,12 +76,11 @@ export default function PluginsPage() {
                   <input
                     autoComplete="url"
                     className="h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                    disabled
                     id="supabase-project-url"
-                    onChange={handleProjectUrlChange}
                     placeholder="https://your-project.supabase.co"
                     spellCheck={false}
                     type="url"
-                    value={projectUrl}
                   />
                 </div>
 
@@ -270,25 +95,12 @@ export default function PluginsPage() {
                     <input
                       autoComplete="off"
                       className="h-10 w-full rounded-lg border border-border/60 bg-background py-2 pl-3 pr-11 font-mono text-xs text-foreground shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                      disabled
                       id="supabase-anon-key"
-                      onChange={handleAnonKeyChange}
                       placeholder="Public anon or sb_publishable_… key"
-                      ref={anonKeyInputRef}
                       spellCheck={false}
-                      type={showKey ? "text" : "password"}
+                      type="password"
                     />
-                    <button
-                      aria-label={showKey ? "Hide key" : "Show key"}
-                      className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition hover:text-foreground"
-                      onClick={handleToggleKeyVisibility}
-                      type="button"
-                    >
-                      {showKey ? (
-                        <EyeOff className="size-4" />
-                      ) : (
-                        <Eye className="size-4" />
-                      )}
-                    </button>
                   </div>
                 </div>
               </div>
@@ -298,56 +110,37 @@ export default function PluginsPage() {
                   aria-live="polite"
                   className="flex min-w-0 items-start gap-2.5"
                 >
-                  <span
-                    className={`mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusStyles[status]}`}
-                  >
-                    {status === "testing" ? (
-                      <LoaderCircle className="size-3 animate-spin" />
-                    ) : (
-                      <span className="size-1.5 rounded-full bg-current" />
-                    )}
-                    {statusLabels[status]}
+                  <span className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-current" />
+                    Not Connected
                   </span>
                   <p className="pt-0.5 text-xs leading-relaxed text-muted-foreground">
-                    {message}
+                    Connection setup is a demo placeholder and is not enabled
+                    yet.
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2 sm:justify-end">
                   <Button
                     className="h-9 gap-1.5 rounded-lg px-3 text-xs"
-                    disabled={
-                      busyAction !== null || !projectUrl.trim() || !hasAnonKey
-                    }
-                    onClick={handleTestConnection}
+                    disabled
                     size="sm"
                     variant="outline"
                   >
-                    {busyAction === "test" ? (
-                      <LoaderCircle className="size-3.5 animate-spin" />
-                    ) : null}
                     Test Connection
                   </Button>
                   <Button
                     className="h-9 gap-1.5 rounded-lg px-3 text-xs"
-                    disabled={
-                      busyAction !== null || !projectUrl.trim() || !hasAnonKey
-                    }
-                    onClick={handleSaveConnection}
+                    disabled
                     size="sm"
                   >
-                    {busyAction === "save" ? (
-                      <LoaderCircle className="size-3.5 animate-spin" />
-                    ) : (
-                      <Save className="size-3.5" />
-                    )}
+                    <Save className="size-3.5" />
                     Save Connection
                   </Button>
                 </div>
               </div>
 
               <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground/80">
-                Use only a public anon or publishable key. Connection checks and
-                encrypted storage run on the server.
+                Supabase connection setup will be available in a future update.
               </p>
             </section>
           </motion.div>
