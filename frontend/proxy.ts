@@ -13,6 +13,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (
+    pathname === "/api/supabase-connection" ||
+    pathname === "/api/supabase-connection/"
+  ) {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
