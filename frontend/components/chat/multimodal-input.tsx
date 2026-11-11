@@ -769,8 +769,8 @@ function PureMultimodalInput({
               className={cn(
                 "h-7 w-7 rounded-xl transition-all duration-200",
                 input.trim()
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-muted text-muted-foreground/25 cursor-not-allowed"
+                  ? "bg-foreground text-background hover:bg-foreground focus-visible:bg-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:bg-foreground active:scale-95"
+                  : "bg-muted text-muted-foreground/25 cursor-not-allowed disabled:hover:bg-muted"
               )}
               data-testid="send-button"
               disabled={!input.trim() || uploadQueue.length > 0}
