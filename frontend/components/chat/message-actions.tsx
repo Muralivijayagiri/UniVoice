@@ -1,7 +1,7 @@
 import equal from "fast-deep-equal";
-import { memo, useCallback } from "react";
+import { Check } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
@@ -9,12 +9,10 @@ import {
   MessageAction as Action,
   MessageActions as Actions,
 } from "../ai-elements/message";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { CopyIcon, PencilEditIcon } from "./icons";
 
 export function PureMessageActions({
-  chatId,
   message,
-  vote,
   isLoading,
   onEdit,
 }: {
@@ -24,8 +22,9 @@ export function PureMessageActions({
   isLoading: boolean;
   onEdit?: () => void;
 }) {
-  const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [isCopied, setIsCopied] = useState(false);
+  const copiedTimeoutRef = useRef<number | null>(null);
 
   const textFromParts = message.parts
     ?.filter((part) => part.type === "text")
@@ -39,99 +38,38 @@ export function PureMessageActions({
       return;
     }
 
-    await copyToClipboard(textFromParts);
-    toast.success("Copied to clipboard!");
+    const copied = await copyToClipboard(textFromParts);
+
+    if (!copied) {
+      toast.error("Failed to copy message.");
+      return;
+    }
+
+    setIsCopied(true);
+    if (copiedTimeoutRef.current !== null) {
+      window.clearTimeout(copiedTimeoutRef.current);
+    }
+    copiedTimeoutRef.current = window.setTimeout(() => {
+      setIsCopied(false);
+      copiedTimeoutRef.current = null;
+    }, 1600);
   }, [copyToClipboard, textFromParts]);
 
-  const handleUpvote = useCallback(() => {
-    const upvote = fetch(
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote`,
-      {
-        body: JSON.stringify({
-          chatId,
-          messageId: message.id,
-          type: "up",
-        }),
-        method: "PATCH",
+  useEffect(
+    () => () => {
+      if (copiedTimeoutRef.current !== null) {
+        window.clearTimeout(copiedTimeoutRef.current);
       }
-    );
+    },
+    []
+  );
 
-    toast.promise(upvote, {
-      error: "Failed to upvote response.",
-      loading: "Upvoting Response...",
-      success: () => {
-        mutate<Vote[]>(
-          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) {
-              return [];
-            }
-
-            const votesWithoutCurrent = currentVotes.filter(
-              (currentVote) => currentVote.messageId !== message.id
-            );
-
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                isUpvoted: true,
-                messageId: message.id,
-              },
-            ];
-          },
-          { revalidate: false }
-        );
-
-        return "Upvoted Response!";
-      },
-    });
-  }, [chatId, message.id, mutate]);
-
-  const handleDownvote = useCallback(() => {
-    const downvote = fetch(
-      `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote`,
-      {
-        body: JSON.stringify({
-          chatId,
-          messageId: message.id,
-          type: "down",
-        }),
-        method: "PATCH",
-      }
-    );
-
-    toast.promise(downvote, {
-      error: "Failed to downvote response.",
-      loading: "Downvoting Response...",
-      success: () => {
-        mutate<Vote[]>(
-          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) {
-              return [];
-            }
-
-            const votesWithoutCurrent = currentVotes.filter(
-              (currentVote) => currentVote.messageId !== message.id
-            );
-
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                isUpvoted: false,
-                messageId: message.id,
-              },
-            ];
-          },
-          { revalidate: false }
-        );
-
-        return "Downvoted Response!";
-      },
-    });
-  }, [chatId, message.id, mutate]);
+  const copyTooltip = isCopied ? "Copied" : "Copy";
+  const copyIcon = isCopied ? (
+    <Check aria-hidden="true" size={16} />
+  ) : (
+    <CopyIcon />
+  );
 
   if (isLoading) {
     return null;
@@ -154,9 +92,9 @@ export function PureMessageActions({
           <Action
             className="size-7 text-muted-foreground/50 hover:text-foreground"
             onClick={handleCopy}
-            tooltip="Copy"
+            tooltip={copyTooltip}
           >
-            <CopyIcon />
+            {copyIcon}
           </Action>
         </div>
       </Actions>
@@ -168,29 +106,9 @@ export function PureMessageActions({
       <Action
         className="text-muted-foreground/50 hover:text-foreground"
         onClick={handleCopy}
-        tooltip="Copy"
+        tooltip={copyTooltip}
       >
-        <CopyIcon />
-      </Action>
-
-      <Action
-        className="text-muted-foreground/50 hover:text-foreground"
-        data-testid="message-upvote"
-        disabled={vote?.isUpvoted}
-        onClick={handleUpvote}
-        tooltip="Upvote Response"
-      >
-        <ThumbUpIcon />
-      </Action>
-
-      <Action
-        className="text-muted-foreground/50 hover:text-foreground"
-        data-testid="message-downvote"
-        disabled={vote && !vote.isUpvoted}
-        onClick={handleDownvote}
-        tooltip="Downvote Response"
-      >
-        <ThumbDownIcon />
+        {copyIcon}
       </Action>
     </Actions>
   );
