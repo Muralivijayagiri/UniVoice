@@ -15,7 +15,7 @@ import {
   Tag,
   UserCheck,
 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,9 +51,14 @@ interface FilterOption {
 }
 
 interface FilterSelectProps {
+  activeFilter: keyof StudentRecordsFilterState | null;
   filterKey: keyof StudentRecordsFilterState;
   icon?: React.ReactNode;
   minWidth?: string;
+  onDropdownOpenChange: (
+    filterKey: keyof StudentRecordsFilterState,
+    open: boolean
+  ) => void;
   onFilterChange: (key: keyof StudentRecordsFilterState, value: string) => void;
   options: FilterOption[];
   placeholder: string;
@@ -61,9 +66,11 @@ interface FilterSelectProps {
 }
 
 const FilterSelect = memo(function FilterSelectInner({
+  activeFilter,
   filterKey,
   icon,
   minWidth = "min-w-[130px]",
+  onDropdownOpenChange,
   onFilterChange,
   options,
   placeholder,
@@ -75,9 +82,18 @@ const FilterSelect = memo(function FilterSelectInner({
     },
     [filterKey, onFilterChange]
   );
+  const handleOpenChange = useCallback(
+    (open: boolean) => onDropdownOpenChange(filterKey, open),
+    [filterKey, onDropdownOpenChange]
+  );
 
   return (
-    <Select onValueChange={handleValueChange} value={value}>
+    <Select
+      onOpenChange={handleOpenChange}
+      onValueChange={handleValueChange}
+      open={activeFilter === filterKey}
+      value={value}
+    >
       <SelectTrigger
         className={cn(
           "h-8.5 w-auto rounded-lg border border-border/60 bg-card px-2.5 text-xs font-normal text-foreground cursor-pointer transition-colors hover:border-border",
@@ -115,6 +131,20 @@ export function StudentRecordsFilters({
   records,
   roleId,
 }: StudentRecordsFiltersProps) {
+  const [activeFilter, setActiveFilter] = useState<
+    keyof StudentRecordsFilterState | null
+  >(null);
+  const handleFilterDropdownChange = useCallback(
+    (filterKey: keyof StudentRecordsFilterState, open: boolean) => {
+      setActiveFilter(open ? filterKey : null);
+    },
+    []
+  );
+  const filterDropdownProps = {
+    activeFilter,
+    onDropdownOpenChange: handleFilterDropdownChange,
+  };
+
   // 1. Academic Department: display full name (dept.dept_name), value mapped to dept.dept_id
   const departmentOptions: FilterOption[] = useMemo(
     () => [
@@ -261,8 +291,19 @@ export function StudentRecordsFilters({
       className="flex flex-wrap items-center gap-2"
       data-testid="student-records-filters"
     >
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px] transition-[opacity,backdrop-filter] duration-150 ease-out dark:bg-black/25",
+          activeFilter
+            ? "pointer-events-auto opacity-100"
+            : "opacity-0 backdrop-blur-0"
+        )}
+        data-testid="student-records-filter-backdrop"
+      />
       {/* 1. Global: Academic Department */}
       <FilterSelect
+        {...filterDropdownProps}
         filterKey="department"
         icon={
           <GraduationCap className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -276,6 +317,7 @@ export function StudentRecordsFilters({
 
       {/* 2. Global: Branch */}
       <FilterSelect
+        {...filterDropdownProps}
         filterKey="branch"
         icon={
           <GitBranch className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -290,6 +332,7 @@ export function StudentRecordsFilters({
       {/* 3. Global: Semester — Completely hidden for Admissions */}
       {roleId !== "admissions" && (
         <FilterSelect
+          {...filterDropdownProps}
           filterKey="semester"
           icon={
             <BookOpen className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -305,6 +348,7 @@ export function StudentRecordsFilters({
       {/* 4. Global: Section — Completely hidden for Admissions */}
       {roleId !== "admissions" && (
         <FilterSelect
+          {...filterDropdownProps}
           filterKey="section"
           icon={
             <Layers className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -321,6 +365,7 @@ export function StudentRecordsFilters({
       {roleId === "finance" && (
         <>
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="academicYear"
             icon={
               <Calendar className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -332,6 +377,7 @@ export function StudentRecordsFilters({
             value={filters.academicYear ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="feeType"
             icon={
               <Tag className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -343,6 +389,7 @@ export function StudentRecordsFilters({
             value={filters.feeType ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="paymentStatus"
             icon={
               <CreditCard className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -359,6 +406,7 @@ export function StudentRecordsFilters({
       {roleId === "admissions" && (
         <>
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="quotaType"
             icon={
               <Tag className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -370,6 +418,7 @@ export function StudentRecordsFilters({
             value={filters.quotaType ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="docsSubmitted"
             icon={
               <CheckCircle2 className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -381,6 +430,7 @@ export function StudentRecordsFilters({
             value={filters.docsSubmitted ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="admissionStatus"
             icon={
               <UserCheck className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -397,6 +447,7 @@ export function StudentRecordsFilters({
       {roleId === "scholarship" && (
         <>
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="academicYear"
             icon={
               <Calendar className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -408,6 +459,7 @@ export function StudentRecordsFilters({
             value={filters.academicYear ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="applicationType"
             icon={
               <Award className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -419,6 +471,7 @@ export function StudentRecordsFilters({
             value={filters.applicationType ?? "all"}
           />
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="scholarshipStatus"
             icon={
               <FileText className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -434,6 +487,7 @@ export function StudentRecordsFilters({
 
       {roleId === "library" && (
         <FilterSelect
+          {...filterDropdownProps}
           filterKey="libraryStatus"
           icon={
             <Clock className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -450,6 +504,7 @@ export function StudentRecordsFilters({
       {roleId === "class_teacher" && (
         <>
           <FilterSelect
+            {...filterDropdownProps}
             filterKey="attendanceFilter"
             icon={
               <UserCheck className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />

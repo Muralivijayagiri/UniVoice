@@ -89,6 +89,7 @@ const HeaderCheckbox = memo(function PureHeaderCheckbox({
       <Checkbox
         aria-label="Select all visible rows"
         checked={checked}
+        className="dark:data-[state=unchecked]:border-foreground/40 dark:data-[state=unchecked]:hover:border-foreground/65"
         onCheckedChange={handleChange}
       />
     </div>
@@ -115,6 +116,7 @@ const RowCheckbox = memo(function PureRowCheckbox({
       <Checkbox
         aria-label="Select row"
         checked={checked}
+        className="dark:data-[state=unchecked]:border-foreground/40 dark:data-[state=unchecked]:hover:border-foreground/65"
         onCheckedChange={handleChange}
       />
     </div>
