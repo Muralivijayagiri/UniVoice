@@ -105,7 +105,12 @@ const FilterSelect = memo(function FilterSelectInner({
         {icon}
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        avoidCollisions={false}
+        className="[&_[data-radix-select-viewport]]:h-auto [&_[data-radix-select-viewport]]:max-h-[max(0px,calc(var(--radix-select-content-available-height)_-_3rem))]"
+        position="popper"
+        side="bottom"
+      >
         {options.map((opt) => (
           <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
