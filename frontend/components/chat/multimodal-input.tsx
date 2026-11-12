@@ -45,7 +45,7 @@ import {
 } from "@/lib/ai/models";
 import { type CampaignPreviewData, getMockCampaign } from "@/lib/campaign";
 import { parseCampaignDraft } from "@/lib/student-records/campaign-handoff";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { cn, generateUUID } from "@/lib/utils";
 import {
   PromptInput,
@@ -66,7 +66,6 @@ import {
   slashCommands,
 } from "./slash-commands";
 import { CAMPAIGN_TILES, SuggestedActions } from "./suggested-actions";
-import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;
