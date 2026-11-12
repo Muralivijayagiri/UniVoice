@@ -3,8 +3,6 @@
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import {
   AlertCircle,
-  ChevronDown,
-  Lock,
   PanelLeftIcon,
   RefreshCw,
 } from "lucide-react";
@@ -395,11 +393,6 @@ export function StudentRecordsPage() {
         </Button>
 
         <RoleSelector />
-
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-card/40 px-2.5 py-1 text-xs text-muted-foreground">
-          <Lock className="size-3.5 text-muted-foreground/70" />
-          <ChevronDown className="size-3 text-muted-foreground/50" />
-        </div>
       </header>
 
       {/* Main Content Area */}
