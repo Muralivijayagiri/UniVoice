@@ -665,7 +665,7 @@ function PureMultimodalInput({
   );
 
   return (
-    <div className={cn("relative flex w-full flex-col gap-4", className)}>
+    <div className={cn("relative flex min-h-0 w-full flex-col gap-4", className)}>
       {editingMessage && onCancelEdit ? (
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <span>Editing message</span>
@@ -706,12 +706,12 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-border/50 [&>div]:bg-card [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-shadow [&>div]:duration-300 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
+        className="[&>div]:min-h-0 [&>div]:rounded-2xl [&>div]:border [&>div]:border-border/50 [&>div]:bg-card [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-shadow [&>div]:duration-300 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
           <div
-            className="flex w-full self-start flex-row gap-2 overflow-x-auto px-3 pt-3 no-scrollbar"
+            className="flex w-full shrink-0 self-start flex-row gap-2 overflow-x-auto px-3 pt-3 no-scrollbar"
             data-testid="attachments-preview"
           >
             {attachments.map((attachment) => (
@@ -737,7 +737,7 @@ function PureMultimodalInput({
           </div>
         )}
         <PromptInputTextarea
-          className="min-h-[84px] max-h-[240px] text-[13px] text-foreground leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35 resize-none transition-all duration-100"
+          className="min-h-[84px] max-h-[240px] overflow-y-auto overscroll-contain text-[13px] text-foreground leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35 resize-none transition-all duration-100"
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={handleTextareaKeyDown}
@@ -749,7 +749,7 @@ function PureMultimodalInput({
           ref={textareaRef}
           value={input}
         />
-        <PromptInputFooter className="px-3 pb-3">
+        <PromptInputFooter className="shrink-0 px-3 pb-3">
           <PromptInputTools>
             <AttachmentMenu
               disabled={status !== "ready"}

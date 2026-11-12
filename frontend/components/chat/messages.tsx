@@ -63,7 +63,7 @@ function PureMessages({
   }, [scrollToBottom]);
 
   return (
-    <div className="relative flex-1 bg-background">
+    <div className="relative flex min-h-0 flex-1 bg-background">
       <div
         className={cn(
           "absolute inset-0 touch-pan-y overflow-y-auto",

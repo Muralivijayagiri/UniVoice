@@ -156,11 +156,11 @@ export function ChatShell() {
               className={cn(
                 "mx-auto w-full max-w-4xl transition-all duration-200",
                 isEmptyChat
-                  ? "flex flex-1 min-h-0 flex-col items-center justify-center overflow-y-auto px-3 py-6 md:px-4"
-                  : "sticky bottom-0 z-1 flex gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4"
+                  ? "flex flex-1 min-h-0 flex-col items-center justify-center overflow-hidden px-3 py-6 md:px-4"
+                  : "sticky bottom-0 z-1 flex min-h-0 shrink-0 gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4"
               )}
             >
-              <div className={cn("w-full", isEmptyChat && "my-auto")}>
+              <div className={cn("min-h-0 w-full", isEmptyChat && "my-auto")}>
                 {!isReadonly && (
                   <MultimodalInput
                     attachments={attachments}
