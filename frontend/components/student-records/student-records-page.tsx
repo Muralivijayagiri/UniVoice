@@ -1,11 +1,7 @@
 "use client";
 
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import {
-  AlertCircle,
-  PanelLeftIcon,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, PanelLeftIcon, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -46,7 +42,7 @@ import { StudentTableToolbar } from "./student-table-toolbar";
 
 export function StudentRecordsPage() {
   const router = useRouter();
-  const { state, toggleSidebar, isMobile } = useSidebar();
+  const { toggleSidebar } = useSidebar();
   const { selectedRole } = useRole();
   const { setInput } = useActiveChat();
 
@@ -384,14 +380,13 @@ export function StudentRecordsPage() {
       {/* Top Header */}
       <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-sidebar-border/40 bg-sidebar/80 px-3 backdrop-blur-md">
         <Button
-          className={state === "collapsed" && !isMobile ? "flex" : "md:hidden"}
+          className="md:hidden"
           onClick={toggleSidebar}
           size="icon-sm"
           variant="ghost"
         >
           <PanelLeftIcon className="size-4" />
         </Button>
-
         <RoleSelector />
       </header>
 
